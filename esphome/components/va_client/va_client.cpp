@@ -657,11 +657,44 @@ void VaClient::on_mic_data_(const std::vector<uint8_t> &samples) {
   size_t offset = this->mic_channel_ & 0x1;
 
   this->mono_buf_.resize(mono_samples);
-  for (size_t i = 0; i < mono_samples; i++) {
-    int32_t s = in32[i * 2 + offset];
-this->mono_buf_[i] = static_cast<int16_t>(
-    std::clamp<int32_t>((s >> 16) * 2, -32768, 32767));
-  }
+ static uint32_t dbg_frames = 0;
+static uint32_t dbg_clipped = 0;
+static int32_t dbg_peak_ch0 = 0;
+static int32_t dbg_peak_ch1 = 0;
+
+for (size_t i = 0; i < mono_samples; i++) {
+  int32_t ch0 = in32[i * 2] >> 16;
+  int32_t ch1 = in32[i * 2 + 1] >> 16;
+
+  int32_t a0 = ch0 < 0 ? -ch0 : ch0;
+  int32_t a1 = ch1 < 0 ? -ch1 : ch1;
+
+  if (a0 > dbg_peak_ch0)
+    dbg_peak_ch0 = a0;
+  if (a1 > dbg_peak_ch1)
+    dbg_peak_ch1 = a1;
+
+  int32_t amplified = (offset == 0 ? ch0 : ch1) * 2;
+
+  if (amplified > 32767 || amplified < -32768)
+    dbg_clipped++;
+
+  this->mono_buf_[i] = static_cast<int16_t>(
+      std::clamp<int32_t>(amplified, -32768, 32767));
+}
+
+dbg_frames++;
+if (dbg_frames >= 50) {
+  ESP_LOGI(TAG, "MIC LEVEL: ch0_peak=%ld ch1_peak=%ld clipped=%u",
+           (long) dbg_peak_ch0,
+           (long) dbg_peak_ch1,
+           (unsigned) dbg_clipped);
+
+  dbg_frames = 0;
+  dbg_clipped = 0;
+  dbg_peak_ch0 = 0;
+  dbg_peak_ch1 = 0;
+}
 
   // Streaming gate. When no session is active we don't forward frames to the
   // server (otherwise OpenAI's VAD would respond to any room speech — the wake
