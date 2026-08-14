@@ -674,7 +674,7 @@ for (size_t i = 0; i < mono_samples; i++) {
   if (a1 > dbg_peak_ch1)
     dbg_peak_ch1 = a1;
 
-  int32_t amplified = (offset == 0 ? ch0 : ch1) * 2;
+  int32_t amplified = ((offset == 0 ? ch0 : ch1) * 7) / 5;
 
   if (amplified > 32767 || amplified < -32768)
     dbg_clipped++;
