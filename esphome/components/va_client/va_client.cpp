@@ -659,7 +659,8 @@ void VaClient::on_mic_data_(const std::vector<uint8_t> &samples) {
   this->mono_buf_.resize(mono_samples);
   for (size_t i = 0; i < mono_samples; i++) {
     int32_t s = in32[i * 2 + offset];
-    this->mono_buf_[i] = static_cast<int16_t>(s >> 16);
+    this->mono_buf_[i] = static_cast<int16_t>(
+    std::clamp<int32_t>((s >> 16) * 4, -32768, 32767));
   }
 
   // Streaming gate. When no session is active we don't forward frames to the
