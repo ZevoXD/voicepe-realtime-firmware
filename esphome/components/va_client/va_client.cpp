@@ -694,9 +694,17 @@ this->mono_buf_[i] = static_cast<int16_t>(
   // 10ms timeout (~portTICK_PERIOD_MS): if WS task is briefly busy we wait
   // a tick rather than dropping the frame and spamming "Could not lock"
   // errors. If we're swamped, we accept dropping rather than blocking mic.
-  esp_websocket_client_send_bin(handle, reinterpret_cast<const char *>(this->mono_buf_.data()),
-                                static_cast<int>(this->mono_buf_.size() * sizeof(int16_t)),
-                                10 / portTICK_PERIOD_MS);
+ const int expected = static_cast<int>(this->mono_buf_.size() * sizeof(int16_t));
+
+const int sent = esp_websocket_client_send_bin(
+    handle,
+    reinterpret_cast<const char *>(this->mono_buf_.data()),
+    expected,
+    10 / portTICK_PERIOD_MS);
+
+if (sent != expected) {
+  ESP_LOGW(TAG, "MIC FRAME SEND FAILED/SHORT: sent=%d expected=%d", sent, expected);
+}
 }
 
 void VaClient::preroll_push_(const int16_t *data, size_t n) {
