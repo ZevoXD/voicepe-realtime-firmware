@@ -2047,7 +2047,7 @@ va_client:
   # listening<->thinking and once built into a loud acoustic-feedback squeal.
   # false = original turn-based behaviour (mic closed while replying; interrupt
   # only via the "stop" word or the center button) — clean turns, no feedback.
-  barge_in: true
+  barge_in: false
   # Write raw PCM16 mono 24kHz into the media resampler. We can't share the
   # announcement lane with external_media_player — va_client grabs the
   # resampling speaker on setup and holds it, which prevents the upstream
